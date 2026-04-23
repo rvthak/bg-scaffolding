@@ -24,3 +24,5 @@ CREATE TABLE IF NOT EXISTS reservations
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         CHECK (end_date > start_date)
 );
+
+CREATE INDEX idx_reservations_apt_dates ON reservations(apartment, start_date, end_date);
