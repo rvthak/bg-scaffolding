@@ -1,6 +1,6 @@
 # bg-scaffolding
 
-Minimal Python service scaffold for a live coding interview. All layers are wired together and working out of the box — replace the placeholder logic to solve the problem.
+Minimal Python service scaffold. All layers are wired together and working out of the box.
 
 ## Project layout
 
