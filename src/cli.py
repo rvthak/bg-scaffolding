@@ -1,6 +1,7 @@
+from datetime import date
+
 import click
 from .service import Service
-from .errors import NotFoundError
 
 _service = Service()
 
@@ -10,30 +11,27 @@ def cli():
     pass
 
 
-@cli.command("list")
-def list_items():
-    items = _service.get_all()
-    if not items:
-        click.echo("No items found.")
+_DATE_TYPE = click.DateTime(formats=["%d-%m-%Y"])
+
+
+@cli.command("availability-check")
+@click.argument("apartment_id", type=int)
+@click.argument("start_date", type=_DATE_TYPE)
+@click.argument("end_date", type=_DATE_TYPE)
+def availability_check(apartment_id: int, start_date, end_date):
+    is_available, apartments = _service.check_apartment_availability(apartment_id, start_date.date(), end_date.date())
+
+    if is_available:
+        click.echo("The apartment you asked for is available in the requested period!")
     else:
-        for item in items:
-            click.echo(f"{item.id}: {item.name}")
+        click.echo("The apartment you asked for is available in the requested period!")
 
-
-@cli.command("get")
-@click.argument("item_id", type=int)
-def get_item(item_id: int):
-    try:
-        item = _service.get_by_id(item_id)
-        click.echo(f"{item.id}: {item.name}")
-    except NotFoundError as e:
-        click.echo(str(e))
-
-
-@cli.command()
-def reset():
-    _service.reset()
-    click.echo("Database reset to empty state.")
+    if apartments:
+        click.echo("Available apartments:")
+        for ap in apartments:
+            click.echo(f" - {ap.id, ap.address, ap.description}")
+    else:
+        click.echo("No apartments are available during the requested period")
 
 
 if __name__ == "__main__":

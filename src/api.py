@@ -1,7 +1,10 @@
 import logging
-from flask import Flask, jsonify
+from datetime import date
+
+from flask import Flask, jsonify, request
+
 from .service import Service
-from .errors import NotFoundError
+from .errors import ValidationError
 
 app = Flask(__name__)
 _service = Service()
@@ -13,23 +16,37 @@ logger = logging.getLogger(__name__)
 def health():
     return jsonify({"status": "ok"})
 
+@app.get("/apartments/<int:apartment_id>/availability")
+def get_apartment_availability(apartment_id: int):
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
+    start_date, end_date = validate_period(start_date, end_date)
 
-@app.get("/items")
-def list_items():
-    items = _service.get_all()
-    return jsonify([{"id": item.id, "name": item.name} for item in items])
+    is_available, alternatives = _service.check_apartment_availability(apartment_id, start_date, end_date)
+
+    return jsonify({"is_available": is_available,
+                    "alternatives": [{"id": ap.id, "address": ap.address} for ap in alternatives]})
 
 
-@app.get("/items/<int:item_id>")
-def get_item(item_id: int):
-    item = _service.get_by_id(item_id)
-    return jsonify({"id": item.id, "name": item.name})
+def validate_period(start_date, end_date):
+    if not start_date or not end_date:
+        raise ValidationError("start_date and end_date are required")
+
+    try:
+        start_date = date.fromisoformat(start_date)
+        end_date = date.fromisoformat(end_date)
+    except ValueError:
+        raise ValidationError("dates must be in YYYY-MM-DD format")
+
+    if start_date >= end_date:
+        raise ValidationError("start_date must be before end_date")
+
+    return start_date, end_date
 
 
-@app.errorhandler(NotFoundError)
-def handle_not_found(e):
-    return jsonify({"error": str(e)}), 404
-
+@app.errorhandler(ValidationError)
+def handle_validation(e):
+    return jsonify({"error": str(e)}), 400
 
 @app.errorhandler(Exception)
 def handle_unexpected(e):

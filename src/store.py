@@ -1,6 +1,7 @@
 import sqlite3
+from datetime import date
 from pathlib import Path
-from .models import Item
+from .models import Apartment
 
 _DB_DIR = Path(__file__).parent.parent / "db"
 _DB_FILE = _DB_DIR / "bg_scaffolding.db"
@@ -13,18 +14,21 @@ _conn.executescript((_DB_DIR / "schema.sql").read_text())
 _conn.executescript((_DB_DIR / "seed.sql").read_text())
 
 
-def get_all() -> list[Item]:
-    rows = _conn.execute("SELECT id, name FROM items").fetchall()
-    return [Item(id=row["id"], name=row["name"]) for row in rows]
-
-
-def get_by_id(item_id: int) -> Item | None:
+def is_apartment_available(apartment_id: int, start_date: date, end_date: date):
     row = _conn.execute(
-        "SELECT id, name FROM items WHERE id = ?", (item_id,)
+        "SELECT 1 FROM reservations WHERE apartment = ? AND start_date < ? AND end_date > ?",
+        (apartment_id, end_date, start_date)
     ).fetchone()
-    return Item(id=row["id"], name=row["name"]) if row else None
+    return row is None
 
 
-def reset() -> None:
-    _conn.execute("DELETE FROM items")
-    _conn.commit()
+def get_available_apartments(start_date: date, end_date: date):
+    rows = _conn.execute(
+        "SELECT ap.* FROM apartments ap "
+        "LEFT JOIN reservations res ON res.apartment = ap.id "
+        "AND res.start_date < ? AND res.end_date > ? "
+        "WHERE res.id IS NULL",
+        (end_date, start_date)
+    ).fetchall()
+    return [Apartment(id=row["id"], address=row["address"], floor=row["floor"], description=row["description"],
+                      owner=row["owner"]) for row in rows]

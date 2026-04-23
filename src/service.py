@@ -1,20 +1,15 @@
 import logging
-from .models import Item
-from .errors import NotFoundError
+from datetime import date
+
 from . import store
 
 logger = logging.getLogger(__name__)
 
 
 class Service:
-    def get_all(self) -> list[Item]:
-        return store.get_all()
 
-    def get_by_id(self, item_id: int) -> Item:
-        item = store.get_by_id(item_id)
-        if item is None:
-            raise NotFoundError(f"Item {item_id} not found")
-        return item
-
-    def reset(self) -> None:
-        store.reset()
+    @staticmethod
+    def check_apartment_availability(apartment_id: int, start_date: date, end_date: date):
+        is_available = store.is_apartment_available(apartment_id, start_date, end_date)
+        available_apartments = store.get_available_apartments(start_date, end_date)
+        return is_available, available_apartments
