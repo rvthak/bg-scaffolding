@@ -33,5 +33,5 @@ def handle_not_found(e):
 
 @app.errorhandler(Exception)
 def handle_unexpected(e):
-    logger.exception("Unhandled error")
+    logger.exception("Unhandled error", exc_info=e)
     return jsonify({"error": "internal server error"}), 500
