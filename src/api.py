@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 def health():
     return jsonify({"status": "ok"})
 
+
 @app.get("/apartments/<int:apartment_id>/availability")
 def get_apartment_availability(apartment_id: int):
     start_date = request.args.get("start_date")
@@ -47,6 +48,7 @@ def validate_period(start_date, end_date):
 @app.errorhandler(ValidationError)
 def handle_validation(e):
     return jsonify({"error": str(e)}), 400
+
 
 @app.errorhandler(Exception)
 def handle_unexpected(e):

@@ -1,7 +1,8 @@
+from datetime import date
+
 import pytest
 from src.api import app
 from src.service import Service
-from src.errors import NotFoundError
 
 
 @pytest.fixture
@@ -19,20 +20,14 @@ def test_health(client):
     assert response.get_json() == {"status": "ok"}
 
 
-def test_get_item_not_found(client):
-    response = client.get("/items/999")
-    assert response.status_code == 404
+def test_check_availability_incorrect_date_format(client):
+    response = client.get("/apartments/1/availability?start_date=18-03-2024&end_date=25-03-2024")
+    assert response.status_code == 400
 
 
 # --- Service tests ---
 
-def test_service_get_all_returns_list():
+def test_service_check_apartment_availability_returns_tuple():
     svc = Service()
-    result = svc.get_all()
-    assert isinstance(result, list)
-
-
-def test_service_get_by_id_raises_not_found():
-    svc = Service()
-    with pytest.raises(NotFoundError):
-        svc.get_by_id(999)
+    result = svc.check_apartment_availability(1, date(2024, 3, 19), date(2024, 3, 25))
+    assert isinstance(result, tuple)

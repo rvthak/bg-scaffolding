@@ -1,5 +1,3 @@
-from datetime import date
-
 import click
 from .service import Service
 
